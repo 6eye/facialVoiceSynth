@@ -1,0 +1,13 @@
+*.suo
+bin
+obj
+
+*.user
+*.Cache
+/Build/lib
+*.nupkg
+
+/Build/*.txt
+/TestResults
+/Build/content
+/packages

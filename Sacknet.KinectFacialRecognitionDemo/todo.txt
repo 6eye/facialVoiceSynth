@@ -1,0 +1,2 @@
+Have a better means of your refresh rate
+have each name be a clickable vector library thing (nice to have)
