@@ -45,7 +45,8 @@ namespace Sacknet.KinectFacialRecognitionDemo
 
         private List<Span> recognitionSpans;
         private SpeechRecognitionEngine speechEngine = null;
-
+        Boolean questioned = false;
+        Boolean willUseSpeech = true; //will use speech to text recognition
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class
@@ -69,10 +70,12 @@ namespace Sacknet.KinectFacialRecognitionDemo
 
             // Set up voice settings
             this.synth.Volume = 100;  // 0...100
-            this.synth.Rate = -2;     // -10...10
-            this.synth.SelectVoiceByHints(VoiceGender.Female, VoiceAge.Teen);
+            this.synth.Rate = 2;     // -10...10
+
+            this.synth.SelectVoiceByHints(VoiceGender.Male, VoiceAge.Senior);
 
             WindowLoaded();
+            //this.synth.SpeakAsync("What is your name?");
 
 
         }
@@ -140,6 +143,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
         /// <summary>
         /// Handles recognition complete events
         /// </summary>
+
         private void Engine_RecognitionComplete(object sender, KinectFacialRecognition.RecognitionResult e)
         {
             TrackedFace face = null;
@@ -192,6 +196,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
 
                         g.DrawPath(new Pen(faceOutlineColor, 5), face.TrackingResult.GetFacePath());
 
+                        //if recognized
                         if (!string.IsNullOrEmpty(face.Key))
                         {
                             var score = Math.Round(face.ProcessorResults.First().Score, 2);
@@ -204,10 +209,21 @@ namespace Sacknet.KinectFacialRecognitionDemo
                             if (lastGreeted != face.Key) //for now, simply separate greetings by a string
                             {
                                 // Async because we don't want synthesizer to block
-                                this.synth.SpeakAsync("Greetings, " + face.Key);
+                                this.synth.SpeakAsync("Hello, " + face.Key);
                                 lastGreeted = face.Key;
                             }
                          }
+
+                        //if unrecognized
+                        else
+                        {
+                            if (!questioned && willUseSpeech) {
+                                this.synth.SpeakAsync("What is your name?");
+                                questioned = true;
+                                }
+
+
+                        }
                     }
 
                     if (this.takeTrainingImage)
@@ -216,7 +232,6 @@ namespace Sacknet.KinectFacialRecognitionDemo
                         var fmResult = (FaceModelRecognitionProcessorResult)face.ProcessorResults.SingleOrDefault(x => x is FaceModelRecognitionProcessorResult);
 
                         var bstf = new BitmapSourceTargetFace();
-                        this.synth.SpeakAsync("Owen");
 
                         bstf.Key = this.viewModel.TrainName;
 
@@ -311,7 +326,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
             timer.Start();
 
 
-            System.Threading.Thread.Sleep(1000);
+            /*System.Threading.Thread.Sleep(1000);
             var timerTwo = new DispatcherTimer();
             timerTwo.Interval = TimeSpan.FromSeconds(2);
             timerTwo.Tick += (s2, e2) =>
@@ -320,7 +335,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                 this.viewModel.TrainingInProcess = false;
                 takeTrainingImage = true;
             };
-            timerTwo.Start();
+            timerTwo.Start();*/
 
         }
 
@@ -357,28 +372,6 @@ namespace Sacknet.KinectFacialRecognitionDemo
 
                 this.speechEngine = new SpeechRecognitionEngine(ri.Id);
 
-                /****************************************************************
-                * 
-                * Use this code to create grammar programmatically rather than from
-                * a grammar file.
-                * 
-                * var directions = new Choices();
-                * directions.Add(new SemanticResultValue("forward", "FORWARD"));
-                * directions.Add(new SemanticResultValue("forwards", "FORWARD"));
-                * directions.Add(new SemanticResultValue("straight", "FORWARD"));
-                * directions.Add(new SemanticResultValue("backward", "BACKWARD"));
-                * directions.Add(new SemanticResultValue("backwards", "BACKWARD"));
-                * directions.Add(new SemanticResultValue("back", "BACKWARD"));
-                * directions.Add(new SemanticResultValue("turn left", "LEFT"));
-                * directions.Add(new SemanticResultValue("turn right", "RIGHT"));
-                *
-                * var gb = new GrammarBuilder { Culture = ri.Culture };
-                * gb.Append(directions);
-                *
-                * var g = new Grammar(gb);
-                * 
-                ****************************************************************/
-
                 // Create a grammar from grammar definition XML file.
                 using (var memoryStream = new MemoryStream(File.ReadAllBytes("C:\\Users\\Datalab\\Downloads\\Sacknet.KinectFacialRecognition-master\\Sacknet.KinectFacialRecognitionDemo\\SpeechGrammar.xml")))
                 {
@@ -390,6 +383,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                 //this.speechEngine.SpeechRecognitionRejected += this.SpeechRejected;
 
                 // let the convertStream know speech is going active
+                // don't start initially active
                 this.convertStream.SpeechActive = true;
 
                 // For long recognition sessions (a few hours or more), it may be beneficial to turn off adaptation of the acoustic model. 
@@ -438,14 +432,28 @@ namespace Sacknet.KinectFacialRecognitionDemo
         private void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
             // Speech utterance confidence below which we treat speech as if it hadn't been heard
-            const double ConfidenceThreshold = 0.2;
+            const double ConfidenceThreshold = 0.91;
 
-            if (e.Result.Confidence >= ConfidenceThreshold)
+            if (e.Result.Confidence >= ConfidenceThreshold && questioned && willUseSpeech)
             {
                 string s = e.Result.Semantics.Value.ToString();
                 this.viewModel.TrainName = s;
-                //this.takeTrainingImage = false;
-                }
+                this.synth.SpeakAsync("Okay, " + s + ", nice to meet you.");
+                //this.takeTrainingImage = true;
+                Train();
+
+                //question timer
+                var timer = new DispatcherTimer();
+                timer.Interval = TimeSpan.FromSeconds(5 );
+                timer.Tick += (s2, e2) =>
+                {
+                    timer.Stop();
+
+                    questioned = false;
+                };
+                timer.Start();
+
+            }
         }
 
 
@@ -474,11 +482,11 @@ namespace Sacknet.KinectFacialRecognitionDemo
 
             /// <summary>
             /// Gets or sets the key returned when this face is found
-            /// </summary>
+            /// </summary>          
             [JsonProperty]
             public string Key { get; set; }
 
-            /// <summary>
+            /// <summary> 
             /// Gets or sets the grayscale, 100x100 target image
             /// </summary>
             public Bitmap Image { get; set; }
