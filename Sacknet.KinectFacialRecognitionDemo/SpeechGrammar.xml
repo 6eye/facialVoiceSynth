@@ -7,6 +7,66 @@
           <item>fergwrtwfgwergret</item>
         </one-of>
       </item>
+      <item>
+        <tag>CLEAR</tag>
+        <one-of>
+          <item>CLEAR</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>IDENTIFY</tag>
+        <one-of>
+          <item>IDENTIFY</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>NAME</tag>
+        <one-of>
+          <item>NAME</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>INCORRECT</tag>
+        <one-of>
+          <item>INCORRECT</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>NOPE</tag>
+        <one-of>
+          <item>NOPE</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>LOWER</tag>
+        <one-of>
+          <item>LOWER</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>DECREASE</tag>
+        <one-of>
+          <item>DECREASE</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>LEVEL</tag>
+        <one-of>
+          <item>LEVEL</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>HIGHER</tag>
+        <one-of>
+          <item>HIGHER</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>INCREASE</tag>
+        <one-of>
+          <item>INCREASE</item>
+        </one-of>
+      </item>
       <item><tag>JAMES</tag>
       <one-of>
         <item>JAMES</item>
@@ -1335,12 +1395,6 @@
         <tag>MITCHELL</tag>
         <one-of>
           <item>MITCHELL</item>
-        </one-of>
-      </item>
-      <item>
-        <tag>ROLAND</tag>
-        <one-of>
-          <item>ROLAND</item>
         </one-of>
       </item>
       <item>

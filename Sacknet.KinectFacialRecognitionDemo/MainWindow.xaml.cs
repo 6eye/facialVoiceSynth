@@ -21,6 +21,7 @@ using Microsoft.Speech.Recognition;
 using System.Threading;
 using System.Windows.Documents; //for span
 using System.Text;
+using System.Collections;
 
 
 namespace Sacknet.KinectFacialRecognitionDemo
@@ -45,8 +46,10 @@ namespace Sacknet.KinectFacialRecognitionDemo
 
         private List<Span> recognitionSpans;
         private SpeechRecognitionEngine speechEngine = null;
-        Boolean questioned = false;
-        Boolean willUseSpeech = true; //will use speech to text recognition
+        private Boolean questioned = false;
+        private Boolean willUseSpeech = true; //will use speech to text recognition
+
+        private String lastSavedImage;
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class
@@ -70,7 +73,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
 
             // Set up voice settings
             this.synth.Volume = 100;  // 0...100
-            this.synth.Rate = 2;     // -10...10
+            this.synth.Rate = 3;     // -10...10
 
             this.synth.SelectVoiceByHints(VoiceGender.Male, VoiceAge.Senior);
 
@@ -276,6 +279,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
             var filenamePrefix = "TF_" + DateTime.Now.Ticks.ToString();
             var suffix = this.viewModel.ProcessorType == ProcessorTypes.FaceModel ? ".fmb" : ".pca";
             System.IO.File.WriteAllText(filenamePrefix + suffix, JsonConvert.SerializeObject(bstf));
+            lastSavedImage = filenamePrefix;
             bstf.Image.Save(filenamePrefix + ".png");
         }
 
@@ -313,17 +317,20 @@ namespace Sacknet.KinectFacialRecognitionDemo
         /// </summary>
         private void Train()
         {
-            this.viewModel.TrainingInProcess = true;
-
-            var timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromSeconds(2);
-            timer.Tick += (s2, e2) =>
+            if (CanTrain)
             {
-                timer.Stop();
-                this.viewModel.TrainingInProcess = false;
-                takeTrainingImage = true;
-            };
-            timer.Start();
+                this.viewModel.TrainingInProcess = true;
+
+                var timer = new DispatcherTimer();
+                timer.Interval = TimeSpan.FromSeconds(.5);
+                timer.Tick += (s2, e2) =>
+                {
+                    timer.Stop();
+                    this.viewModel.TrainingInProcess = false;
+                    takeTrainingImage = true;
+                };
+                timer.Start();
+            }
 
 
             /*System.Threading.Thread.Sleep(1000);
@@ -361,6 +368,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
             {
                 // on failure, set the status text
                 //this.statusBarText.Text = Properties.Resources.NoKinectReady;
+                this.synth.SpeakAsync("No kinect currently ready");
                 return;
             }
 
@@ -373,7 +381,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                 this.speechEngine = new SpeechRecognitionEngine(ri.Id);
 
                 // Create a grammar from grammar definition XML file.
-                using (var memoryStream = new MemoryStream(File.ReadAllBytes("C:\\Users\\Datalab\\Downloads\\Sacknet.KinectFacialRecognition-master\\Sacknet.KinectFacialRecognitionDemo\\SpeechGrammar.xml")))
+                using (var memoryStream = new MemoryStream(File.ReadAllBytes("..\\..\\..\\SpeechGrammar.xml")))
                 {
                     var g = new Grammar(memoryStream);
                     this.speechEngine.LoadGrammar(g);
@@ -397,6 +405,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
             else
             {
                 //this.statusBarText.Text = Properties.Resources.NoSpeechRecognizer;
+                this.synth.SpeakAsync("No speech recognizer found");
             }
         }
 
@@ -428,30 +437,125 @@ namespace Sacknet.KinectFacialRecognitionDemo
             return null;
         }
 
+        Boolean CanTrain = true;
 
+        List<String> list = new List<String>();
+
+        // Speech utterance confidence below which we treat speech as if it hadn't been heard
+        double ConfidenceThreshold = 0.8;
         private void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
-            // Speech utterance confidence below which we treat speech as if it hadn't been heard
-            const double ConfidenceThreshold = 0.91;
 
-            if (e.Result.Confidence >= ConfidenceThreshold && questioned && willUseSpeech)
+
+            if (e.Result.Confidence >= ConfidenceThreshold && willUseSpeech)
             {
                 string s = e.Result.Semantics.Value.ToString();
-                this.viewModel.TrainName = s;
-                this.synth.SpeakAsync("Okay, " + s + ", nice to meet you.");
-                //this.takeTrainingImage = true;
-                Train();
-
-                //question timer
-                var timer = new DispatcherTimer();
-                timer.Interval = TimeSpan.FromSeconds(5 );
-                timer.Tick += (s2, e2) =>
+                switch (s)
                 {
-                    timer.Stop();
+                    case "IRVING":
+                        //swallow, this causes nothing but trouble
+                        break;
+                    case "IDENTIFY":
+                        this.synth.SpeakAsync("I am Penny the collaborative Robot");
+                        break;
+                    case "CLEAR":
+                        this.synth.SpeakAsync("Clearing current identification set");
+                        this.viewModel.TargetFaces.Clear();                        
+                        lastGreeted = null;
+                        list.Clear();
+                        this.viewModel.TrainName = "";
+                        string startupPath = System.IO.Directory.GetCurrentDirectory();
+                        DirectoryInfo di = new DirectoryInfo(startupPath);
+                        //remove PCA files
+                        FileInfo[] filesPCA = di.GetFiles("*.pca").Where(p => p.Extension == ".pca").ToArray();
+                        foreach (FileInfo file in filesPCA)
+                            try
+                            {
+                                file.Attributes = FileAttributes.Normal;
+                                File.Delete(file.FullName);
+                            }
+                            catch { }
+                        //remove PNG files
+                        FileInfo[] filePNGs = di.GetFiles("TF_*").ToArray();
+                        foreach (FileInfo file in filePNGs)
+                            try
+                            {
+                                file.Attributes = FileAttributes.Normal;
+                                File.Delete(file.FullName);
+                            }
+                            catch { }
+                        this.UpdateTargetFaces();
+                        break;
+                    
+                    case "INCORRECT":
+                        if (lastSavedImage != null) {
+                            this.synth.SpeakAsync("I'm sorry, I'll remove that last entry");
+                            this.viewModel.TargetFaces.RemoveAt(this.viewModel.TargetFaces.Count - 1);
+                            list.Remove(lastGreeted);
+                            File.Delete(lastSavedImage + ".PNG");
+                            File.Delete(lastSavedImage + ".pca");
+                            this.UpdateTargetFaces();
+                            questioned = true;
+                        }
+                        break;
+                    case "LOWER":
+                    case "DECREASE":
+                        if (ConfidenceThreshold > .4)
+                        {
+                            ConfidenceThreshold = ConfidenceThreshold - .1;
+                            this.synth.SpeakAsync("Okay, I'll decrease the speech confidence to " + (ConfidenceThreshold * 100).ToString());
+                        } else
+                        {
+                            this.synth.SpeakAsync("Sorry, minimum confidence reached");
+                        }
+                        break;
+                   case "HIGHER":
+                   case "INCREASE":
+                        if (ConfidenceThreshold < .9)
+                        {
+                            ConfidenceThreshold = ConfidenceThreshold + .1;
+                            this.synth.SpeakAsync("Okay, I'll increase the speech confience to " + (ConfidenceThreshold * 100).ToString());
+                        } else
+                        {
+                            this.synth.SpeakAsync("Sorry, max confidence reached");
+                        }
+                        break;;
+                   case "LEVEL":
+                        this.synth.SpeakAsync("Speech confidence level is currently " + (ConfidenceThreshold * 100).ToString());
+                        break;
+                    default:
+                        if (willUseSpeech && s != lastGreeted && CanTrain && questioned)
+                        {
+                            var match = list.FirstOrDefault(stringToCheck => stringToCheck.Contains(s));
+                            if (match == null)
+                            {
+                                this.synth.SpeakAsync("Okay, " + s + ", nice to meet you.");
+                            } else {
+                                this.synth.SpeakAsync("Okay, I'll update your ID set.");
+                            }
+                                this.viewModel.TrainName = s;
+                                list.Add(s);
+                                willUseSpeech = false;
+                                lastGreeted = s;
+                                //this.takeTrainingImage = true;
+                                Train();
+                                CanTrain = false;
+                                willUseSpeech = true;
+                          }
+                        //question timer
+                        var timer = new DispatcherTimer();
+                        timer.Interval = TimeSpan.FromSeconds(10);
+                        timer.Tick += (s2, e2) =>
+                        {
+                            timer.Stop();
+                            CanTrain = true;
+                            questioned = false;
+                        };
+                        timer.Start();
+                        break;
 
-                    questioned = false;
-                };
-                timer.Start();
+                    
+                }
 
             }
         }
