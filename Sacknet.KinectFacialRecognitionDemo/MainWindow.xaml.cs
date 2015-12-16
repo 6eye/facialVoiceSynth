@@ -75,7 +75,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
             this.synth.Volume = 100;  // 0...100
             this.synth.Rate = 3;     // -10...10
 
-            this.synth.SelectVoiceByHints(VoiceGender.Male, VoiceAge.Senior);
+            this.synth.SelectVoiceByHints(VoiceGender.Female, VoiceAge.Senior);
 
             WindowLoaded();
             //this.synth.SpeakAsync("What is your name?");
@@ -452,10 +452,47 @@ namespace Sacknet.KinectFacialRecognitionDemo
                 string s = e.Result.Semantics.Value.ToString();
                 switch (s)
                 {
+                    case "HI PENNY":
+                        this.synth.SpeakAsync("Hello there");
+                        break;
+                    case "HOW ARE YOU":
+                        this.synth.SpeakAsync("I'm good, and you?");
+                        break;
+                    case "WHO IS GOING TO TAKE OVER THE WORLD":
+                        this.synth.SpeakAsync("No other than the DATA Lab");
+                        break;
+                    case "WHAT IS YOUR FAVORITE MOVIE":
+                        this.synth.SpeakAsync("Terminator");
+                        break;
+                    case "WINDOWS OR LINUX":
+                    case "LINUX OR WINDOWS":
+                        this.synth.SpeakAsync("I don't answer stupid questions");
+                        break;
+                    case "WHAT TIME IS IT":
+                        this.synth.SpeakAsync(DateTime.Now.ToString("h:mm:ss tt"));
+                        break;
+                    case "WHAT MONTH IS IT":
+                        this.synth.SpeakAsync(DateTime.Now.ToString("MMMM"));
+                        break;
+                    case "WHAT DAY IS IT":
+                        DateTime dateValue = new DateTime(2008, 6, 11);
+                        this.synth.SpeakAsync(dateValue.ToString("dddd"));
+                         break;
+                    case "WE R":
+                        this.synth.SpeakAsync("PENN STATE");
+                        break;
+                    case "THANK YOU":
+                        this.synth.SpeakAsync("You're welcome.");
+                        break;
                     case "IRVING":
                         //swallow, this causes nothing but trouble
                         break;
+                    case "SHUTDOWN":
+                        this.synth.Speak("Farewell.");
+                        Application.Current.Shutdown();
+                        break;
                     case "IDENTIFY":
+                    case "WHO ARE YOU":
                         this.synth.SpeakAsync("I am Penny the collaborative Robot");
                         break;
                     case "CLEAR":
@@ -495,6 +532,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                             File.Delete(lastSavedImage + ".PNG");
                             File.Delete(lastSavedImage + ".pca");
                             this.UpdateTargetFaces();
+                            this.viewModel.TrainName = "";
                             questioned = true;
                         }
                         break;
@@ -524,7 +562,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                         this.synth.SpeakAsync("Speech confidence level is currently " + (ConfidenceThreshold * 100).ToString());
                         break;
                     default:
-                        if (willUseSpeech && s != lastGreeted && CanTrain && questioned)
+                        if (willUseSpeech /*&& s != lastGreeted*/ && CanTrain && questioned)
                         {
                             var match = list.FirstOrDefault(stringToCheck => stringToCheck.Contains(s));
                             if (match == null)

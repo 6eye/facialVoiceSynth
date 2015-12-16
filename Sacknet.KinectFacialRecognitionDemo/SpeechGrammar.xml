@@ -8,6 +8,84 @@
         </one-of>
       </item>
       <item>
+        <tag>WE R</tag>
+        <one-of>
+          <item>WE R</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>THANK YOU</tag>
+        <one-of>
+          <item>THANK YOU</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>WHO ARE YOU</tag>
+        <one-of>
+          <item>WHO ARE YOU</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>WHAT TIME IS IT</tag>
+        <one-of>
+          <item>WHAT TIME IS IT</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>WINDOWS OR LINUX</tag>
+        <one-of>
+          <item>WINDOWS OR LINUX</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>LINUX OR WINDOWS</tag>
+        <one-of>
+          <item>LINUX OR WINDOWS</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>HOW ARE YOU</tag>
+        <one-of>
+          <item>HOW ARE YOU</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>WHAT DAY IS IT</tag>
+        <one-of>
+          <item>WHAT DAY IS IT</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>WHAT MONTH IS IT</tag>
+        <one-of>
+          <item>WHAT MONTH IS IT</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>WHAT MONTH IS IT</tag>
+        <one-of>
+          <item>WHAT MONTH IS IT</item>
+        </one-of>
+      </item>
+      <item>
+     <tag>WHAT IS YOUR FAVORITE MOVIE</tag>
+        <one-of>
+          <item>>WHAT IS YOUR FAVORITE MOVIE</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>WHO IS GOING TO TAKE OVER THE WORLD</tag>
+        <one-of>
+          <item>WHO IS GOING TO TAKE OVER THE WORLD</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>SHUTDOWN</tag>
+        <one-of>
+          <item>SHUTDOWN</item>
+        </one-of>
+      </item>
+      <item>
         <tag>CLEAR</tag>
         <one-of>
           <item>CLEAR</item>
@@ -17,6 +95,12 @@
         <tag>IDENTIFY</tag>
         <one-of>
           <item>IDENTIFY</item>
+        </one-of>
+      </item>
+      <item>
+        <tag>HI PENNY</tag>
+        <one-of>
+          <item>HI PENNY</item>
         </one-of>
       </item>
       <item>
