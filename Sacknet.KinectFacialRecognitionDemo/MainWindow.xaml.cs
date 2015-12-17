@@ -50,6 +50,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
         private Boolean willUseSpeech = true; //will use speech to text recognition
 
         private String lastSavedImage;
+        private int recogMonitor = 1; //only one recognition object available to increment/decrement
 
         /// <summary>
         /// Initializes a new instance of the MainWindow class
@@ -61,6 +62,10 @@ namespace Sacknet.KinectFacialRecognitionDemo
             this.viewModel.ProcessorType = ProcessorTypes.PCA;
             this.viewModel.PropertyChanged += this.ViewModelPropertyChanged;
             this.viewModel.TrainButtonClicked = new ActionCommand(this.Train);
+            this.viewModel.MuteButtonClicked = new ActionCommand(this.Mute);
+            this.viewModel.UnmuteButtonClicked = new ActionCommand(this.Unmute);
+            this.viewModel.ClassifyToggleClicked = new ActionCommand(this.ToggleClassify);
+            this.viewModel.ClearButtonClicked = new ActionCommand(this.Clear);
             this.viewModel.TrainNameEnabled = true;
 
             this.kinectSensor = KinectSensor.GetDefault();
@@ -313,6 +318,23 @@ namespace Sacknet.KinectFacialRecognitionDemo
         }
 
         /// <summary>
+        /// Updates the target faces after single deletion
+        /// </summary>
+        private void UpdateTargetFacesAfterSingleDeletion()
+        {
+            this.activeProcessor.SetTargetFaces(this.viewModel.TargetFaces);
+
+            this.viewModel.TrainName = this.viewModel.TrainName.Replace(this.viewModel.TargetFaces.Count.ToString(), (this.viewModel.TargetFaces.Count - 1).ToString());
+        }
+
+        private void UpdateTargetFacesAfterFullDeletion()
+        {
+            this.activeProcessor.SetTargetFaces(this.viewModel.TargetFaces);
+
+            this.viewModel.TrainName = this.viewModel.TrainName.Replace(this.viewModel.TargetFaces.Count.ToString(), (this.viewModel.TargetFaces.Count - this.viewModel.TargetFaces.Count).ToString());
+        }
+
+        /// <summary>
         /// Starts the training image countdown
         /// </summary>
         private void Train()
@@ -331,18 +353,82 @@ namespace Sacknet.KinectFacialRecognitionDemo
                 };
                 timer.Start();
             }
+        }
 
-
-            /*System.Threading.Thread.Sleep(1000);
-            var timerTwo = new DispatcherTimer();
-            timerTwo.Interval = TimeSpan.FromSeconds(2);
-            timerTwo.Tick += (s2, e2) =>
+        /// <summary>
+        /// Mutes
+        /// </summary>
+        private void Mute()
+        {
+            this.synth.SpeakAsyncCancelAll();
+            if (recogMonitor == 1) { 
+            this.synth.SpeakAsyncCancelAll();
+            this.synth.SpeakAsync("Muting");
+            this.speechEngine.SpeechRecognized -= this.SpeechRecognized;
+            recogMonitor = 0;
+            }
+            else
             {
-                timerTwo.Stop();
-                this.viewModel.TrainingInProcess = false;
-                takeTrainingImage = true;
-            };
-            timerTwo.Start();*/
+                this.synth.SpeakAsync("I am already muted");
+            }
+        }
+
+        private void Unmute()
+        {
+            if (recogMonitor == 0) { 
+            this.synth.SpeakAsyncCancelAll();
+            this.synth.SpeakAsync("Unmuted");
+            this.speechEngine.SpeechRecognized += this.SpeechRecognized;
+            recogMonitor = 1;
+            }
+            else
+            {
+                this.synth.SpeakAsync("I am already unmuted");
+            }
+        }
+
+        private void ToggleClassify()
+        {
+            if (Speaking == true)
+            {
+                Speaking = false;
+                this.synth.SpeakAsync("Auto classification set to off");
+            }
+            else
+            {
+                Speaking = true;
+                this.synth.SpeakAsync("Auto classification set to on");
+            }
+        }
+
+        private void Clear()
+        {
+            this.viewModel.TargetFaces.Clear();
+            lastGreeted = null;
+            list.Clear();
+            this.viewModel.TrainName = "";
+            string startupPath = System.IO.Directory.GetCurrentDirectory();
+            DirectoryInfo di = new DirectoryInfo(startupPath);
+            //remove PCA files
+            FileInfo[] filesPCA = di.GetFiles("*.pca").Where(p => p.Extension == ".pca").ToArray();
+            foreach (FileInfo file in filesPCA)
+                try
+                {
+                    file.Attributes = FileAttributes.Normal;
+                    File.Delete(file.FullName);
+                }
+                catch { }
+            //remove PNG files
+            FileInfo[] filePNGs = di.GetFiles("TF_*").ToArray();
+            foreach (FileInfo file in filePNGs)
+                try
+                {
+                    file.Attributes = FileAttributes.Normal;
+                    File.Delete(file.FullName);
+                }
+                catch { }
+            this.UpdateTargetFacesAfterFullDeletion();
+            this.synth.SpeakAsync("Cleared ID set");
 
         }
 
@@ -438,7 +524,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
         }
 
         Boolean CanTrain = true;
-        Boolean Speaking = false;
+        Boolean Speaking = true;
 
         List<String> list = new List<String>();
 
@@ -453,6 +539,10 @@ namespace Sacknet.KinectFacialRecognitionDemo
                 string s = e.Result.Semantics.Value.ToString();
                 switch (s)
                 {
+                    case "MINH":
+                        break;
+                    case "JERMAINE":
+                        break;
                     case "START":
                     case "BEGIN":
                         this.synth.SpeakAsync("Okay, now automatically classifying");
@@ -541,7 +631,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                             list.Remove(lastGreeted);
                             File.Delete(lastSavedImage + ".PNG");
                             File.Delete(lastSavedImage + ".pca");
-                            this.UpdateTargetFaces();
+                            this.UpdateTargetFacesAfterSingleDeletion();
                             this.viewModel.TrainName = "";
                             questioned = true;
                         }

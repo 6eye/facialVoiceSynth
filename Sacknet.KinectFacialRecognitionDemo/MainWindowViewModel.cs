@@ -44,6 +44,26 @@ namespace Sacknet.KinectFacialRecognitionDemo
         public ICommand TrainButtonClicked { get; set; }
 
         /// <summary>
+        /// Mute command
+        /// </summary>
+        public ICommand MuteButtonClicked { get; set; }
+
+        /// <summary>
+        /// Unmute command
+        /// </summary>
+        public ICommand UnmuteButtonClicked { get; set; }
+
+        /// <summary>
+        /// Auto-Classification toggle command
+        /// </summary>
+        public ICommand ClassifyToggleClicked { get; set; }
+
+        /// <summary>
+        /// Clear training set
+        /// </summary>
+        public ICommand ClearButtonClicked { get; set; }
+
+        /// <summary>
         /// Gets or sets the current video frame
         /// </summary>
         public ImageSource CurrentVideoFrame
