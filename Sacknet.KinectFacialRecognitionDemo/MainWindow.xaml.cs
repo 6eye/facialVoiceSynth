@@ -212,7 +212,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                             if (lastGreeted != face.Key) //for now, simply separate greetings by a string
                             {
                                 // Async because we don't want synthesizer to block
-                                this.synth.SpeakAsync("Hello, " + face.Key);
+                                this.synth.SpeakAsync("Hi, " + face.Key);
                                 lastGreeted = face.Key;
                             }
                          }
@@ -220,7 +220,7 @@ namespace Sacknet.KinectFacialRecognitionDemo
                         //if unrecognized
                         else
                         {
-                            if (!questioned && willUseSpeech) {
+                            if (!questioned) {
                                 this.synth.SpeakAsync("What is your name?");
                                 questioned = true;
                                 }
@@ -438,11 +438,12 @@ namespace Sacknet.KinectFacialRecognitionDemo
         }
 
         Boolean CanTrain = true;
+        Boolean Speaking = false;
 
         List<String> list = new List<String>();
 
         // Speech utterance confidence below which we treat speech as if it hadn't been heard
-        double ConfidenceThreshold = 0.8;
+        double ConfidenceThreshold = 0.7;
         private void SpeechRecognized(object sender, SpeechRecognizedEventArgs e)
         {
 
@@ -452,6 +453,15 @@ namespace Sacknet.KinectFacialRecognitionDemo
                 string s = e.Result.Semantics.Value.ToString();
                 switch (s)
                 {
+                    case "START":
+                    case "BEGIN":
+                        this.synth.SpeakAsync("Okay, now automatically classifying");
+                        Speaking = true;
+                        break;
+                    case "OFF":
+                        this.synth.SpeakAsync("Okay, no longer automatically classifying");
+                        Speaking = false;
+                        break;
                     case "HI PENNY":
                         this.synth.SpeakAsync("Hello there");
                         break;
@@ -567,18 +577,23 @@ namespace Sacknet.KinectFacialRecognitionDemo
                             var match = list.FirstOrDefault(stringToCheck => stringToCheck.Contains(s));
                             if (match == null)
                             {
-                                this.synth.SpeakAsync("Okay, " + s + ", nice to meet you.");
+                                if (Speaking)
+                                    this.synth.SpeakAsync("Okay, " + s );//+ ", nice to meet you.");
                             } else {
-                                this.synth.SpeakAsync("Okay, I'll update your ID set.");
+                                if (Speaking)
+                                    this.synth.SpeakAsync("Okay, I'll update your ID set.");
                             }
                                 this.viewModel.TrainName = s;
-                                list.Add(s);
-                                willUseSpeech = false;
-                                lastGreeted = s;
-                                //this.takeTrainingImage = true;
-                                Train();
-                                CanTrain = false;
-                                willUseSpeech = true;
+                                if (Speaking)
+                                {
+                                    list.Add(s);
+                                    willUseSpeech = false;
+                                    lastGreeted = s;
+                                    //this.takeTrainingImage = true;
+                                    Train();
+                                    CanTrain = false;
+                                    willUseSpeech = true;
+                                }
                           }
                         //question timer
                         var timer = new DispatcherTimer();

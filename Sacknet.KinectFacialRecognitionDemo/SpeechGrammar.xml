@@ -7,6 +7,24 @@
           <item>fergwrtwfgwergret</item>
         </one-of>
       </item>
+            <item>
+        <tag>OFF</tag>
+        <one-of>
+          <item>OFF</item>
+        </one-of>
+      </item>
+     <item>
+        <tag>START</tag>
+        <one-of>
+          <item>START</item>
+        </one-of>
+      </item>
+           <item>
+        <tag>BEGIN</tag>
+        <one-of>
+          <item>BEGIN</item>
+        </one-of>
+      </item>
       <item>
         <tag>WE R</tag>
         <one-of>
